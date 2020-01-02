@@ -21,15 +21,11 @@ def create_app(test_config=None):
                              'Content-Type,Authorization,true')
         response.headers.add('Access-Control-Allow-Methods',
                              'GET,PUT,POST,PATCH,DELETE,OPTIONS')
-    '''
-  '''
-    '''
-  '''
 
     '''
   @TODO: 
   Create an endpoint to handle GET requests 
-  for all available categories.
+  for all categories. science art geography history entertainment sports
   '''
 
     '''

@@ -54,6 +54,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(len(data['categories']))
 
+    def test_delete_question(self):
+        res = self.client().delete('/questions/23')
+        data = json.loads(res.data)
+
+        question = Question.query.filter(Question.id == 23).one_or_none()
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['deleted'], 23)
+        self.assertEqual(question, None)
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(len(data['questions']))
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

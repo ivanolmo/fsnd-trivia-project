@@ -75,6 +75,29 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
+    @app.route('/questions/<int:question_id>', methods=['GET'])
+    def get_specific_question(question_id):
+        try:
+            question = Question.query.filter(Question.id ==
+                                             question_id).one_or_none()
+
+            if question is None:
+                abort(404)
+
+            return jsonify({
+                'success': True,
+                'question_id': question_id,
+                'question': question.question,
+                'answer': question.answer,
+                'category': question.category
+             })
+
+        except Exception as error:
+            raise error
+
+        finally:
+            db.session.close()
+
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
@@ -97,6 +120,9 @@ def create_app(test_config=None):
 
         except:
             abort(422)
+
+        finally:
+            db.session.close()
 
     '''
   @TODO: 
@@ -136,6 +162,9 @@ def create_app(test_config=None):
 
         except:
             abort(422)
+
+        finally:
+            db.session.close()
 
     '''
   @TODO: 

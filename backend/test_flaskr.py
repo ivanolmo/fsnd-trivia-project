@@ -63,14 +63,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['categories']))
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/19')
+        res = self.client().delete('/questions/20')
         data = json.loads(res.data)
 
-        question = Question.query.filter(Question.id == 19).one_or_none()
+        question = Question.query.filter(Question.id == 20).one_or_none()
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 19)
+        self.assertEqual(data['deleted'], 20)
         self.assertEqual(question, None)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
@@ -84,6 +84,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['created'])
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
+
+    def test_get_specific_question(self):
+        res = self.client().get('/questions/17')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['question_id'], 17)
+        self.assertTrue(data['question'])
+        self.assertTrue(data['answer'])
+        self.assertEqual(data['category'], 2)
 
 
 # Make the tests conveniently executable

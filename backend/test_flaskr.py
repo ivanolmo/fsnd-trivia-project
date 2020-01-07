@@ -40,7 +40,8 @@ class TriviaTestCase(unittest.TestCase):
 
     """
     TODO
-    Write at least one test for each test for successful operation and for expected errors.
+    Write at least one test for each test for successful operation and for 
+    expected errors.
     """
 
     def test_get_paginated_questions(self):
@@ -63,14 +64,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['categories']))
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/20')
+        res = self.client().delete('/questions/19')
         data = json.loads(res.data)
 
-        question = Question.query.filter(Question.id == 20).one_or_none()
+        question = Question.query.filter(Question.id == 19).one_or_none()
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 20)
+        self.assertEqual(data['deleted'], 19)
         self.assertEqual(question, None)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
@@ -95,6 +96,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['question'])
         self.assertTrue(data['answer'])
         self.assertEqual(data['category'], 2)
+
+    def test_search_with_result_case_insensitive(self):
+        res = self.client().post('/questions', json={'searchTerm': 'MAhaL'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(len(data['questions']), 1)
+        self.assertTrue(data['total_matching_questions'])
 
 
 # Make the tests conveniently executable

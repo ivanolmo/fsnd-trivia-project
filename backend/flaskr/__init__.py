@@ -1,6 +1,5 @@
 import os
 from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 
@@ -89,7 +88,8 @@ def create_app(test_config=None):
                 'question_id': question_id,
                 'question': question.question,
                 'answer': question.answer,
-                'category': question.category
+                'category': question.category,
+                'difficulty': question.difficulty
              })
 
         except Exception as error:
@@ -169,14 +169,30 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-  @TODO: 
-  Create a GET endpoint to get questions based on category. 
+    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+    def get_questions_by_category(category_id):
+        try:
+            category = Category.query.get(category_id)
+            questions = Question.query.filter(
+                Question.category == category_id).all()
 
-  TEST: In the "List" tab / main screen, clicking on one of the 
-  categories in the left column will cause only questions of that 
-  category to be shown. 
-  '''
+            if not questions:
+                abort(404)
+
+            return jsonify({
+                'success': True,
+                'questions': [question.format() for question in questions],
+                'total_questions': len(Question.query.all()),
+                'total_in_category': len(questions),
+                'current_category': category.format()
+            })
+
+        except Exception as error:
+            raise error
+
+        finally:
+            db.session.close()
+
 
     '''
   @TODO: 

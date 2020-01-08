@@ -4,7 +4,7 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 
 from .flaskr import create_app
-from .models import setup_db, Question, Category
+from .models import db, setup_db, Question, Category
 
 
 class TriviaTestCase(unittest.TestCase):
@@ -38,7 +38,7 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
+        """
     TODO
     Write at least one test for each test for successful operation and for 
     expected errors.
@@ -52,6 +52,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
+        self.assertEqual(len(data['questions']), 10)
         self.assertTrue(len(data['categories']))
         self.assertEqual(data['current_category'], None)
 
@@ -64,14 +65,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['categories']))
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/19')
+        res = self.client().delete('/questions/20')
         data = json.loads(res.data)
 
-        question = Question.query.filter(Question.id == 19).one_or_none()
+        question = Question.query.filter(Question.id == 20).one_or_none()
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 19)
+        self.assertEqual(data['deleted'], 20)
         self.assertEqual(question, None)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
@@ -93,6 +94,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertEqual(data['question_id'], 17)
+        self.assertEqual(data['difficulty'], 3)
         self.assertTrue(data['question'])
         self.assertTrue(data['answer'])
         self.assertEqual(data['category'], 2)
@@ -105,6 +107,18 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['questions']), 1)
         self.assertTrue(data['total_matching_questions'])
+
+    def test_get_questions_by_category(self):
+        res = self.client().get('/categories/3/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['current_category']['id'], 3)
+        self.assertEqual(data['current_category']['type'], 'Geography')
+        self.assertEqual(len(data['questions']), 3)
+        self.assertTrue(data['total_in_category'])
+
 
 
 # Make the tests conveniently executable

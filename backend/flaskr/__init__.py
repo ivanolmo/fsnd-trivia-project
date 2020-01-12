@@ -39,7 +39,7 @@ def create_app(test_config=None):
     def get_categories():
         try:
             categories = Category.query.all()
-            if categories is None:
+            if len(categories) == 0:
                 abort(404)
             return jsonify({
                 'success': True,
@@ -47,8 +47,10 @@ def create_app(test_config=None):
                     category.id: category.type for category in categories
                 }
             })
+
         except Exception as error:
             raise error
+
         finally:
             db.session.close()
 
@@ -69,8 +71,10 @@ def create_app(test_config=None):
                 'current_category': None,
                 'categories': categories
              })
+
         except Exception as error:
             raise error
+
         finally:
             db.session.close()
 
@@ -118,14 +122,14 @@ def create_app(test_config=None):
                 'total_questions': len(Question.query.all())
             })
 
-        except:
-            abort(422)
+        except Exception as error:
+            raise error
 
         finally:
             db.session.close()
 
     @app.route('/questions', methods=['POST'])
-    def add_question():
+    def add_or_search_question():
         body = request.get_json()
 
         new_question = body.get('question', None)
@@ -135,36 +139,44 @@ def create_app(test_config=None):
         search = body.get('searchTerm', None)
 
         try:
-            if search:
+            if search is not None:
+                if body['searchTerm'] == '':
+                    abort(400)
                 selection = Question.query.order_by(Question.id).filter(
                     Question.question.ilike(f'%{search}%'))
                 current_questions = paginate_questions(request, selection)
 
                 return jsonify({
+                    'body': body,
                     'success': True,
                     'questions': current_questions,
                     'total_matching_questions': len(selection.all())
-                })
+                }), 200
 
             else:
+                if len(new_question) == 0 or len(new_answer) == 0:
+                    abort(400)
                 question = Question(question=new_question,
                                     answer=new_answer,
                                     difficulty=new_difficulty,
                                     category=new_category)
                 question.insert()
 
-                questions = Question.query.order_by(Question.id).all()
-                current_questions = paginate_questions(request, questions)
+                current_questions = paginate_questions(request, Question.query.
+                                                       order_by(Question.id).
+                                                       all())
 
                 return jsonify({
+                    'body': body,
                     'success': True,
-                    'created': question.id,
+                    'created_id': question.id,
+                    'new_question': question.format(),
                     'questions': current_questions,
                     'total_questions': len(Question.query.all())
-                })
+                }), 201
 
-        except:
-            abort(422)
+        except Exception as error:
+            raise error
 
         finally:
             db.session.close()
@@ -198,6 +210,12 @@ def create_app(test_config=None):
         try:
             body = request.get_json()
 
+            valid_categories = [0, 1, 2, 3, 4, 5, 6]
+            if 'quiz_category' not in body or 'previous_questions' not in body:
+                abort(400)
+            elif int(body.get('quiz_category')['id']) not in valid_categories:
+                abort(422)
+
             questions = [question.format() for question in
                          Question.query.filter(Question.id.notin_(
                              body.get('previous_questions'))).all()]
@@ -225,11 +243,37 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-  @TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": error.description
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": error.description
+        }), 422
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": error.description
+        }), 400
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            "success": False,
+            "error": 405,
+            "message": error.description
+        }), 405
 
     return app
 

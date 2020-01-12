@@ -193,18 +193,37 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
+    @app.route('/quizzes', methods=['POST'])
+    def play_trivia():
+        try:
+            body = request.get_json()
 
-    '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
+            questions = [question.format() for question in
+                         Question.query.filter(Question.id.notin_(
+                             body.get('previous_questions'))).all()]
 
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
+            if body.get('quiz_category')['id'] != 0:
+                questions = [question.format() for question in
+                             Question.query.filter_by(category=body.get(
+                                 'quiz_category')['id']).filter(
+                                 Question.id.notin_(body.get(
+                                     'previous_questions'))).all()]
+
+            if questions:
+                next_question = random.choice(questions)
+            else:
+                next_question = None
+
+            return jsonify({
+                'success': True,
+                'question': next_question
+            })
+
+        except Exception as error:
+            raise error
+
+        finally:
+            db.session.close()
 
     '''
   @TODO: 

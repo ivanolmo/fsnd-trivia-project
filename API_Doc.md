@@ -4,7 +4,7 @@
 The Trivia API is based on REST principles. Each endpoint returns JSON formatted data, and 
 currently requires no authentication.
 
-The API is hosted locally, and its base address is http://localhost:3000.
+The API is hosted locally, and it's base address is http://localhost:3000.
 
 ## Error handling
 Errors are returned as a JSON object, and are formatted as follows:

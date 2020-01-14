@@ -73,29 +73,34 @@ class TriviaTestCase(unittest.TestCase):
                                           'spelling and try again.')
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/20')
+        # add test question to be deleted
+        test_question = Question(question="test", answer="test", category=1,
+                                 difficulty=1)
+        test_question.insert()
+        test_question_id = test_question.id
+
+        res = self.client().delete(f'/questions/{test_question_id}')
         data = json.loads(res.data)
 
-        question = Question.query.filter(Question.id == 20).one_or_none()
+        question = Question.query.filter(Question.id ==
+                                         test_question_id).one_or_none()
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 20)
+        self.assertEqual(data['deleted'], test_question_id)
         self.assertEqual(question, None)
         self.assertTrue(data['total_questions'])
-        self.assertTrue(len(data['questions']))
 
     def test_delete_question_not_exist(self):
         res = self.client().delete('/questions/9000')
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
-        self.assertEqual(data['error'], 404)
-        self.assertEqual(data['message'], 'The requested URL was not found on '
-                                          'the server. If you entered the URL '
-                                          'manually please check your '
-                                          'spelling and try again.')
+        self.assertEqual(data['error'], 422)
+        self.assertEqual(data['message'], 'The request was well-formed but '
+                                          'was unable to be followed due to '
+                                          'semantic errors.')
 
     def test_add_question(self):
         res = self.client().post('/questions', json=self.new_question)

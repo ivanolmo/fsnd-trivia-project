@@ -1,7 +1,7 @@
-import os
+import random
+
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
-import random
 
 from ..models import db, setup_db, Question, Category
 
@@ -32,20 +32,23 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Headers',
                              'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods',
-                             'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+                             'GET,POST,DELETE,OPTIONS')
         return response
 
     @app.route('/categories', methods=['GET'])
     def get_categories():
         try:
             categories = Category.query.all()
-            if len(categories) == 0:
+
+            if categories is None:
                 abort(404)
+
             return jsonify({
                 'success': True,
                 'categories': {
                     category.id: category.type for category in categories
-                }
+                },
+                'total_categories': len(Category.query.all())
             })
 
         except Exception as error:
@@ -64,6 +67,7 @@ def create_app(test_config=None):
 
             if questions is None:
                 abort(404)
+
             return jsonify({
                 'success': True,
                 'questions': paginated_questions,
@@ -109,16 +113,15 @@ def create_app(test_config=None):
                                              question_id).one_or_none()
 
             if question is None:
-                abort(404)
+                abort(422)
 
             question.delete()
-            questions = Question.query.order_by(Question.id).all()
-            current_questions = paginate_questions(request, questions)
+            # questions = Question.query.order_by(Question.id).all()
+            # current_questions = paginate_questions(request, questions)
 
             return jsonify({
                 'success': True,
                 'deleted': question_id,
-                'questions': current_questions,
                 'total_questions': len(Question.query.all())
             })
 
@@ -147,13 +150,16 @@ def create_app(test_config=None):
                 current_questions = paginate_questions(request, selection)
 
                 return jsonify({
-                    'body': body,
                     'success': True,
+                    'search_term': body['searchTerm'],
                     'questions': current_questions,
-                    'total_matching_questions': len(selection.all())
+                    'total_matching_questions': len(selection.all()),
+                    'total_questions': len(Question.query.all())
                 }), 200
 
             else:
+                if new_question is None or new_answer is None:
+                    abort(400)
                 if len(new_question) == 0 or len(new_answer) == 0:
                     abort(400)
                 question = Question(question=new_question,
@@ -167,7 +173,6 @@ def create_app(test_config=None):
                                                        all())
 
                 return jsonify({
-                    'body': body,
                     'success': True,
                     'created_id': question.id,
                     'new_question': question.format(),
@@ -274,6 +279,14 @@ def create_app(test_config=None):
             "error": 405,
             "message": error.description
         }), 405
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return jsonify({
+            "success": False,
+            "error": 500,
+            "message": error.description
+        }), 500
 
     return app
 
